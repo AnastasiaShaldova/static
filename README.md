@@ -1,25 +1,41 @@
-# StaticDistributor
-## GOD Static 
-Репозиторий с разработкой модуля Static для проекта GoD Школы IT.
+## Начало работы
 
-### Installation
-1. Клонировать репозиторий проекта и зайти в директорию проекта.
-2. Создать для проекта виртуальное окружение через poetry.
-3. Установить зависимости
-   ```shell
-   poetry shell
-   ```
-   ```shell
-   poetry install
-   ```
-4. Создать локальную базу данных и  выполнить скрипт из файла DB.sql
-5. Скопировать файл `.env.example` в файл `.env` и настроить его под БД.
-6. Для запуска приложения необходимо ввести команду:
-   ```shell
-   uvicorn app:create_app --reload
-   ```
-7. Или воспользуйтесь Докером
-   ```shell
-   docker-compose up --build
-   ```
----
+1. Запускаем оболочку poetry
+```commandline
+poetry shell
+```
+
+2. Устанавливаем зависимости
+```commandline
+poetry install
+```
+
+3. Создаем локальную БД и файл с переменными .env
+
+
+4. Обновляем БД с помощью миграций
+```commandline
+alembic upgrade head
+```
+
+
+## Запуск локального проекта
+
+```commandline
+uvicorn app:create_app --reload --host 0.0.0.0 --port 8080
+```
+
+
+## Создание новых миграций
+
+- Создание автоматически сгенерированной миграции
+```commandline
+alembic revision --autogenerate -m "migration message"
+```
+P.S. Можно изменить миграцию, если это необходимо
+
+- Создание пустой миграции
+```commandline
+alembic revision -m "migration message"
+```
+P.P.S. Нужно обновить БД после создания миграций
