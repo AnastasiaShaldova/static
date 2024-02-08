@@ -13,7 +13,6 @@ __all__ = [
     'StaticUpload',
     'ReadSpecificImages',
     'UpdateSpecificImages',
-    'ReadAllStaticQuery',
     'ReadStaticByIdQuery',
     'ReadType',
     'StaticById',
@@ -53,15 +52,13 @@ class ReadSpecificImages(BaseStatic):
     id: PositiveInt = StaticFields.id
     image_path: str = StaticFields.image_path
 
+    class Config:
+        orm_mode = True
+
 
 class UpdateSpecificImages(BaseStatic):
     id: PositiveInt = StaticFields.id
     image: UploadFile
-
-
-# Query
-class ReadAllStaticQuery(BaseStatic):
-    ...
 
 
 class ReadStaticByIdQuery(BaseStatic):

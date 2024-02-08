@@ -2,8 +2,7 @@ from dependency_injector import containers, providers
 
 from app.internal.repository.postgresql import Repository
 from .auth_handler import Auth
-from .image import *
-from .user import *
+from .image import StaticDist
 
 
 class Services(containers.DeclarativeContainer):
@@ -15,8 +14,4 @@ class Services(containers.DeclarativeContainer):
     )
     auth = providers.Factory(
         Auth
-    )
-    user = providers.Factory(
-        StaticUser,
-        repository_container.user,
     )

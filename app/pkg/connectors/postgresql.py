@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 import aiopg
 import pydantic
 from aiopg import Connection
+from sqlalchemy.ext.asyncio import (AsyncEngine, AsyncSession,
+                                    async_sessionmaker, create_async_engine)
 
 from .base_connector import BaseConnector
 
@@ -30,6 +32,7 @@ class Postgresql(BaseConnector):
             database_name: database name.
         """
         self.pool = None
+        self.engine = None
         self.username = username
         self.password = password
         self.host = host
@@ -39,7 +42,7 @@ class Postgresql(BaseConnector):
     def get_dsn(self):
         """Description of ``BaseConnector.get_dsn``."""
         return (
-            f"postgresql://"
+            f"postgresql+asyncpg://"
             f"{self.username}:"
             f"{self.password.get_secret_value()}@"
             f"{self.host}:{self.port}/"
@@ -59,3 +62,15 @@ class Postgresql(BaseConnector):
         async with self.pool as pool:
             async with pool.acquire() as conn:
                 yield conn
+
+    def get_engine(self) -> AsyncEngine:
+        return create_async_engine(self.get_dsn(), echo=True)
+
+    def get_async_session(self) -> async_sessionmaker[AsyncSession]:
+        return async_sessionmaker(self.get_engine(), expire_on_commit=False)
+
+    async def insert_objects(self, instance) -> None:
+        async_session = self.get_async_session()
+        async with async_session() as session:
+            async with session.begin():
+                session.add(instance)

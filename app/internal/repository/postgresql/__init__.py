@@ -1,16 +1,13 @@
 from dependency_injector import containers, providers
 
-from app.internal.repository.postgresql.image import Static
-from app.internal.repository.postgresql.user import StaticUser
+from app.pkg.connectors import Connectors
 
-__all__ = [
-    "Repository",
-]
+from .image import Static
+
+__all__ = ["Repository"]
 
 
 class Repository(containers.DeclarativeContainer):
-    image = providers.Factory(Static)
-    user = providers.Factory(StaticUser)
+    connectors = providers.Container(Connectors)
 
-
-
+    image = providers.Factory(Static, connectors.postgresql)

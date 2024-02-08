@@ -19,3 +19,14 @@ async def get_connect(
     async with postgresql.get_connect() as connection:
         async with (await connection.cursor(cursor_factory=RealDictCursor)) as cur:
             yield cur
+
+
+@asynccontextmanager
+@inject
+async def get_session(
+    postgresql: Postgresql = Provide[Connectors.postgresql],
+) -> Cursor:
+    """Get async connection to postgresql of pool."""
+    as_session = postgresql.get_async_session()
+    async with as_session() as session:
+        yield session

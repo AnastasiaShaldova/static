@@ -20,9 +20,7 @@ async def upload_image(
         cmd: UploadFile,
         static_service: services.StaticDist = Depends(Provide[services.Services.image]),
 ):
-    return await static_service.static_uploader(
-        cmd=cmd
-    )
+    return await static_service.static_uploader(cmd=cmd)
 
 
 @router.get(
@@ -56,7 +54,7 @@ async def read_all_images(
 
 @router.delete(
     "/{image_id:int}",
-    response_model=Optional[models.StaticIn],
+    response_model=models.ReadSpecificImages,
     status_code=status.HTTP_200_OK,
     summary="Delete specific image.",
 )
@@ -86,16 +84,3 @@ async def update_image(
         id=image_id,
         image=cmd
     ))
-
-
-@router.get(
-    "/type",
-    response_model=List[models.ReadType],
-    status_code=status.HTTP_200_OK,
-    summary="Get all type images."
-)
-@inject
-async def read_all_type(
-        type_service: services.StaticDist = Depends(Provide[services.Services.image]),
-):
-    return await type_service.read_all_type()

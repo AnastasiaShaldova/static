@@ -57,15 +57,10 @@ class StaticDist:
         except EmptyResult:
             raise ImageNotFound
 
-    async def read_all_specific_images(
-            self,
-            query: Optional[models.ReadAllStaticQuery] = None,
-    ) -> List[models.ReadSpecificImages]:
+    async def read_all_specific_images(self) -> List[models.ReadSpecificImages]:
         """Read all images from repository."""
         try:
-            if not query:
-                query = models.ReadAllStaticQuery()
-            return await self.repository.read_all(query=query)
+            return await self.repository.read_all()
         except EmptyResult:
             raise ImageNotFound
 
@@ -82,7 +77,7 @@ class StaticDist:
     async def delete_specific_image(
             self,
             cmd: models.StaticById,
-    ) -> Union[models.StaticIn, Exception]:
+    ) -> models.ReadSpecificImages:
         """Delete specific image from repository by image id."""
         try:
             res = await self.repository.delete(cmd=cmd)
@@ -101,12 +96,3 @@ class StaticDist:
             return await self.static_updater(cmd)
         except EmptyResult:
             raise ImageNotFound
-
-    async def read_all_type(
-            self,
-    ) -> List[models.ReadType]:
-        """Read all images from repository."""
-        try:
-            return await self.repository.read_all()
-        except EmptyResult:
-            raise TypeNotFound

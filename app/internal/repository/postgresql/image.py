@@ -1,90 +1,71 @@
 from typing import List
 
-from app.internal.repository.handlers.postgresql.collect_response import collect_response
-from app.internal.repository.postgresql.connection import get_connect as get_cursor
-from app.internal.repository.repository import Repository
+from sqlalchemy import delete, select, update
+
+from app.pkg.connectors.postgresql import Postgresql
 from app.pkg import models
+from app.pkg.models.sqlalchemy import StaticBlockModel
 
 __all__ = [
     "Static",
 ]
 
 
-class Static(Repository):
-    @collect_response
+class Static:
+    postgresql: Postgresql
+
+    def __init__(self, postgresql: Postgresql):
+        self.postgresql = postgresql
+
     async def create(self, cmd: models.StaticDist) -> models.StaticIn:
-        q = """
-            INSERT INTO images(
-                static_path
-            )
-                values (
-                %(image_path)s
-            )
-            RETURNING id, static_path as image_path;
-        """
-        async with get_cursor() as cur:
-            await cur.execute(q, cmd.to_dict(show_secrets=True))
+        as_session = self.postgresql.get_async_session()
+        data = cmd.to_dict()
+        instance = StaticBlockModel(**data)
+        async with as_session() as session:
+            async with session.begin():
+                session.add(instance)
+                await session.commit()
+        return models.StaticIn(id=instance.id, image_path=instance.image_path)
 
-            return await cur.fetchone()
-
-    @collect_response
     async def read(self, query: models.ReadStaticByIdQuery) -> models.ReadSpecificImages:
-        q = """
-            SELECT 
-                id, static_path as image_path 
-            FROM images
-            WHERE 
-                images.id = %(id)s
-        """
-        async with get_cursor() as cur:
-            await cur.execute(q, query.to_dict(show_secrets=True))
-            return await cur.fetchone()
+        as_session = self.postgresql.get_async_session()
+        async with as_session() as session:
+            async with session.begin():
+                result = await session.execute(select(StaticBlockModel)
+                                               .filter(StaticBlockModel.id == query.id))
+                result = result.scalars().first()
+        if result:
+            return models.ReadSpecificImages.from_orm(result)
 
-    @collect_response
-    async def read_all(self, query: models.ReadAllStaticQuery) -> List[models.ReadSpecificImages]:
-        q = """
-            SELECT 
-                id, static_path as image_path
-            FROM images
-        """
-        async with get_cursor() as cur:
-            await cur.execute(q, query.to_dict(show_secrets=True))
-            return await cur.fetchall()
+    async def read_all(self) -> List[models.ReadSpecificImages]:
+        as_session = self.postgresql.get_async_session()
+        async with as_session() as session:
+            async with session.begin():
+                result = await session.execute(select(StaticBlockModel)
+                                               .order_by(StaticBlockModel.id))
+                result = result.scalars().all()
+        return [models.ReadSpecificImages.from_orm(item) for item in result]
 
-    @collect_response
     async def update(self, cmd: models.ReadSpecificImages) -> models.ReadSpecificImages:
-        q = """
-            UPDATE images
-            SET 
-                static_path = %(image_path)s
-            WHERE 
-                id = %(id)s        
-            RETURNING 
-                id, static_path as image_path;
-        """
-        async with get_cursor() as cur:
-            await cur.execute(q, cmd.to_dict(show_secrets=True))
-            return await cur.fetchone()
+        as_session = self.postgresql.get_async_session()
+        async with as_session() as session:
+            async with session.begin():
+                await session.execute(
+                    update(StaticBlockModel)
+                    .where(StaticBlockModel.id == cmd.id)
+                    .values({'image_path': cmd.image_path})
+                )
+                await session.commit()
+        return models.ReadSpecificImages(id=cmd.id, image_path=cmd.image_path)
 
-    @collect_response
-    async def delete(self, cmd: models.StaticById) -> models.StaticIn:
-        q = """
-            DELETE FROM images
-            WHERE 
-                id = %(id)s
-            RETURNING id, static_path as image_path;
-        """
-        async with get_cursor() as cur:
-            await cur.execute(q, cmd.to_dict(show_secrets=True))
-            return await cur.fetchone()
-
-    @collect_response
-    async def read_all(self, ) -> List[models.ReadType]:
-        q = """
-            SELECT 
-                id, type_images
-            FROM type_images
-        """
-        async with get_cursor() as cur:
-            await cur.execute(q)
-            return await cur.fetchall()
+    async def delete(self, cmd: models.StaticById) -> models.ReadSpecificImages:
+        as_session = self.postgresql.get_async_session()
+        async with as_session() as session:
+            async with session.begin():
+                result = await session.execute(delete(StaticBlockModel)
+                                               .filter(StaticBlockModel.id == cmd.id)
+                                               .returning(StaticBlockModel))
+                result = result.scalars().first()
+                await session.commit()
+            if result:
+                return models.ReadSpecificImages.from_orm(result)

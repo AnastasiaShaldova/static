@@ -44,7 +44,7 @@ class Settings(_Settings):
     HOST_URL: SecretStr
     HOST_PORT: SecretStr
     #: SecretStr: secret x-token for authority.
-    X_API_TOKEN_STATIC: SecretStr
+    X_API_TOKEN: SecretStr
 
     # # Browser info: headers
     # HEADERS: Dict

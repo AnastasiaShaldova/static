@@ -28,8 +28,7 @@ def collect_response(fn):
 
     @wraps(fn)
     @handle_exception
-    async def inner(*args: object, **kwargs: object) -> Union[
-        List[Model], Model]:
+    async def inner(*args: object, **kwargs: object) -> Union[List[Model], Model]:
         response = await fn(*args, **kwargs)
         if not response:
             raise EmptyResult
@@ -43,13 +42,15 @@ def collect_response(fn):
 
 async def __convert_response(response: RealDictRow, annotations: str):
     """
-    Converts the response of the request to an List of models or to a single model.
+    Converts the response of the request to an List of models
+    or to a single model.
     Args:
         response: Response of aiopg query.
         annotations: Annotations of `fn`.
 
     Returns: List[`Model`] if List is specified in the type annotations,
-            or a single `Model` if `Model` is specified in the type annotations.
+            or a single `Model` if `Model` is specified in
+            the type annotations.
     """
 
     r = response.copy()
